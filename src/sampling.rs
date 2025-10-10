@@ -4,7 +4,7 @@ use crate::{
     random::XorRand,
 };
 
-pub fn sample_cos_hemisphere(normal: &Vec3, rand: &mut XorRand) -> (Vec3, f64) {
+pub fn sample_cos_hemisphere(normal: &Vec3, rand: &mut XorRand) -> Vec3 {
     let w = *normal;
     let u = if w.0.abs() > EPS {
         cross(Vec3(0., 1., 0.), w).normalize()
@@ -17,9 +17,7 @@ pub fn sample_cos_hemisphere(normal: &Vec3, rand: &mut XorRand) -> (Vec3, f64) {
     let sin_theta2 = rand.next01();
     let sin_theta = sin_theta2.sqrt();
 
-    let dir = u * sin_theta * phi.cos() + v * sin_theta * phi.sin() + w * (1. - sin_theta2).sqrt();
-
-    (dir, dot(*normal, dir) * PI_INV)
+    u * sin_theta * phi.cos() + v * sin_theta * phi.sin() + w * (1. - sin_theta2).sqrt()
 }
 
 pub fn pdf_sample_cos_hemi(normal: &Vec3, dir: &Vec3) -> f64 {

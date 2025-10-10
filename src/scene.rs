@@ -1,10 +1,22 @@
 use crate::{
-    constant::{E, EARTH_RAD, KARMAN_LINE, NS, PI, PN, SUN_RAD},
+    constant::{E, EARTH_RAD, KARMAN_LINE, NS, PI, PN, SUN_LIGHT, SUN_RAD},
     math::{Point3, Vec3, dot},
     random::XorRand,
     ray::{HitRecord, Ray},
     sphere::{ObjectType, Sphere},
 };
+
+pub struct NeeResult {
+    pub pdf: f64,
+    pub value: f64,
+    pub dir: Vec3,
+}
+
+impl NeeResult {
+    fn new(pdf: f64, value: f64, dir: Vec3) -> Self {
+        NeeResult { pdf, value, dir }
+    }
+}
 
 pub struct Scene {
     pub sun: Sphere,
@@ -36,12 +48,9 @@ impl Scene {
     }
 
     pub fn hit(&self, ray: &Ray, record: &mut HitRecord) -> bool {
-        let mut is_hit = false;
-        is_hit = self.earth.hit(ray, record);
-        is_hit = self.sun.hit(ray, record);
-        is_hit = self.atmosphere.hit(ray, record);
-
-        is_hit
+        let _ = self.earth.hit(ray, record);
+        let _ = self.sun.hit(ray, record);
+        self.atmosphere.hit(ray, record)
     }
 
     pub fn in_atmosphere(&self, point: &Point3) -> bool {
@@ -95,36 +104,51 @@ impl Scene {
         ray: &Ray,
         wavelength: f64,
         rand: &mut XorRand,
-    ) -> (Option<HitRecord>, Point3, f64) {
-        // return (hit_record, point, pdf)
+    ) -> (Option<HitRecord>, Point3) {
+        // return (hit_record, point)
         let majorant = self.scattering_coeff_rayleigh(&self.altitude_min_point(ray), wavelength); // absorption-coeff=0
         let mut record = HitRecord::new();
         let _ = self.hit(ray, &mut record);
 
         let mut to_border = record.distance;
         let mut sampled_len = -rand.next01().ln() / majorant;
-        let mut pdf = majorant * (-majorant * sampled_len).exp();
         let mut point = ray.org + sampled_len * ray.dir;
 
         to_border -= sampled_len;
 
         loop {
             if to_border < 0. {
-                return (Some(record), point, pdf);
+                return (Some(record), point);
             }
 
             let ratio = self.scattering_coeff_rayleigh(&point, wavelength) / majorant;
             if rand.next01() < ratio {
-                return (None, point, pdf * ratio);
+                return (None, point);
             }
 
-            pdf *= 1. - ratio;
-
             sampled_len = -rand.next01().ln() / majorant;
-            pdf *= majorant * (-majorant * sampled_len).exp();
             point = ray.org + sampled_len * ray.dir;
             to_border -= sampled_len;
         }
+    }
+
+    pub fn nee(&self, org: &Point3, wavelength: f64, rand: &mut XorRand) -> NeeResult {
+        let (sample_point, pdf) = self.sun.sample(org, rand);
+        let dir = (sample_point - *org).normalize();
+        let ray = Ray::new(*org, dir);
+        let mut record = HitRecord::new();
+        record.distance = (sample_point - *org).length();
+        if self.earth.hit(&ray, &mut record) {
+            return NeeResult::new(0., 0., dir);
+        }
+
+        //org is in atmosphere
+        if let (Some(_), _) = self.delta_tracking(&ray, wavelength, rand) {
+            // transmittance=1
+            return NeeResult::new(pdf, SUN_LIGHT, dir);
+        }
+
+        NeeResult::new(0., 0., dir)
     }
 }
 
