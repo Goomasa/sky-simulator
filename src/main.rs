@@ -1,5 +1,6 @@
 mod constant;
 mod math;
+mod pathtracing;
 mod random;
 mod ray;
 mod sampling;

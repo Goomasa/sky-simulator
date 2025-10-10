@@ -47,8 +47,8 @@ pub fn sample_phase_rayleigh(prev_dir: &Vec3, rand: &mut XorRand) -> (Vec3, f64)
     let phi = 2. * PI * rand.next01();
 
     let tmp = {
-        let v = rand.next01();
-        -4. * v + 2. + (16. * v * v - 16. * v + 5.).sqrt()
+        let r = rand.next01();
+        (-4. * r + 2. + (16. * r * r - 16. * r + 5.).sqrt()).powf(1. / 3.)
     };
     let cos_theta = tmp - 1. / tmp;
     let sin_theta = (1. - cos_theta * cos_theta).sqrt();
