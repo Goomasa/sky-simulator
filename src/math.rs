@@ -1,5 +1,7 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
+use crate::constant::PI;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3(pub f64, pub f64, pub f64);
 
@@ -100,4 +102,8 @@ pub fn is_valid(v: &Vec3) -> bool {
         return false;
     }
     true
+}
+
+pub fn to_radian(angle: f64) -> f64 {
+    angle * PI / 180.
 }

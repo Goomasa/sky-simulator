@@ -1,3 +1,4 @@
+mod camera;
 mod constant;
 mod math;
 mod pathtracing;
