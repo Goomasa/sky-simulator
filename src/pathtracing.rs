@@ -56,11 +56,11 @@ impl Pathtracing {
     }
 
     fn trace_earth(&mut self, scene: &Scene, rand: &mut XorRand) {
-        // lambertian model, albedo=0.5
+        // lambertian model, albedo=0.3
         let new_dir = sample_cos_hemisphere(&self.orienting_normal, rand);
         let new_org = self.record.hitpoint + 0.00001 * self.orienting_normal;
         self.now_ray = Ray::new(new_org, new_dir);
-        self.throughput *= 0.5;
+        self.throughput *= 0.3;
 
         let nee_result = scene.nee(&new_org, self.wavelength, rand);
         if nee_result.pdf != 0. {
@@ -139,11 +139,18 @@ impl Pathtracing {
                 }
                 ObjectType::Atmosphere => {
                     in_atmosphere = !in_atmosphere;
-                    self.now_ray.org = self.record.hitpoint - 0.00001 * self.orienting_normal;
                 }
             }
         }
 
         self.value
+    }
+
+    pub fn test(&mut self, scene: &Scene) -> f64 {
+        if scene.sun.hit(&self.now_ray, &mut self.record) {
+            SUN_LIGHT
+        } else {
+            0.
+        }
     }
 }

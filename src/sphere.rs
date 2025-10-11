@@ -5,6 +5,7 @@ use crate::{
     ray::{HitRecord, Ray},
 };
 
+#[derive(Clone, Copy)]
 pub enum ObjectType {
     Sun,
     Earth,
@@ -48,6 +49,7 @@ impl Sphere {
 
         record.hitpoint = ray.org + ray.dir * record.distance;
         record.normal = (record.hitpoint - self.center).normalize();
+        record.obj_type = self.obj_type;
         true
     }
 

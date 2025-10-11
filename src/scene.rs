@@ -1,6 +1,6 @@
 use crate::{
-    constant::{E, EARTH_RAD, KARMAN_LINE, NS, PI, PN, SUN_LIGHT, SUN_RAD},
-    math::{Point3, Vec3, dot},
+    constant::{E, EARTH_RAD, EARTH_TO_SUN, KARMAN_LINE, NS, PI, PN, SUN_LIGHT, SUN_RAD},
+    math::{Point3, Vec3, dot, fmax},
     random::XorRand,
     ray::{HitRecord, Ray},
     sphere::{ObjectType, Sphere},
@@ -29,8 +29,9 @@ impl Scene {
         let sun = Sphere::new(Vec3::zero(), SUN_RAD, ObjectType::Sun);
 
         let earth_center = {
-            let earth_phi = month as f64 * PI / 6.;
-            Vec3(EARTH_RAD * earth_phi.cos(), EARTH_RAD * earth_phi.sin(), 0.)
+            let earth_phi = (month - 3) as f64 * PI / 6.;
+            let r = EARTH_RAD + SUN_RAD + EARTH_TO_SUN;
+            Vec3(r * earth_phi.cos(), r * earth_phi.sin(), 0.)
         };
         let earth = Sphere::new(earth_center, EARTH_RAD, ObjectType::Earth);
 
@@ -60,12 +61,12 @@ impl Scene {
 
     // wavelength: [nm]
     pub fn scattering_coeff_rayleigh(&self, point: &Point3, wavelength: f64) -> f64 {
-        let h = (*point - self.earth.center).length() - EARTH_RAD;
+        let h = fmax((*point - self.earth.center).length() - EARTH_RAD, 0.);
         let ior = get_ior(wavelength);
 
         let mu0 = {
             let w_cm = wavelength * 1e-7; // [nm] -> [cm]
-            let l = 24. * PI.powi(3) / (w_cm.powi(4) * NS * NS);
+            let l = 24. * PI.powi(3) / (w_cm.powi(4) * NS);
             let m = ((ior * ior - 1.) / (ior * ior + 2.)).powi(2);
             let r = (6. + 3. * PN) / (6. - 7. * PN);
 
@@ -84,7 +85,7 @@ impl Scene {
 
     pub fn altitude_min_point(&self, ray: &Ray) -> Point3 {
         let po = ray.org - self.earth.center;
-        let dot = dot(po, ray.org);
+        let dot = dot(po.normalize(), ray.dir);
 
         if dot > 0. {
             ray.org

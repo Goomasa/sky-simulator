@@ -1,6 +1,6 @@
 use crate::{
     constant::{EPS, PI, PI_INV},
-    math::{Vec3, cross, dot},
+    math::{Vec3, cross, dot, fmax},
     random::XorRand,
 };
 
@@ -21,7 +21,7 @@ pub fn sample_cos_hemisphere(normal: &Vec3, rand: &mut XorRand) -> Vec3 {
 }
 
 pub fn pdf_sample_cos_hemi(normal: &Vec3, dir: &Vec3) -> f64 {
-    dot(*normal, *dir) * PI_INV
+    fmax(dot(*normal, *dir) * PI_INV, 0.)
 }
 
 pub fn sample_wavelength(rand: &mut XorRand) -> f64 {

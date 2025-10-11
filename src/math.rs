@@ -71,10 +71,6 @@ impl Vec3 {
     }
 }
 
-pub fn multiply(v: Vec3, w: Vec3) -> Vec3 {
-    Vec3(v.0 * w.0, v.1 * w.1, v.2 * w.2)
-}
-
 pub fn dot(v: Vec3, w: Vec3) -> f64 {
     v.0 * w.0 + v.1 * w.1 + v.2 * w.2
 }
@@ -95,10 +91,10 @@ pub fn fmin(a: f64, b: f64) -> f64 {
     if a > b { b } else { a }
 }
 
-pub fn is_valid(v: &Vec3) -> bool {
-    if v.0.is_nan() || v.1.is_nan() || v.2.is_nan() {
+pub fn is_valid(v: f64) -> bool {
+    if v.is_nan() {
         return false;
-    } else if v.0 < 0. || v.1 < 0. || v.2 < 0. {
+    } else if v < 0. {
         return false;
     }
     true

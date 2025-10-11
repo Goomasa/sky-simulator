@@ -41,7 +41,7 @@ impl Eye {
         let u = (scene.earth.center - scene.sun.center).normalize();
         let v = cross(w, u).normalize();
 
-        let phi = 2.0 * PI * (self.time % 24) as f64 / 24.;
+        let phi = PI * (self.time % 24) as f64 / 12.;
         let theta = to_radian(90. - self.latitude);
         let r = EARTH_RAD + self.altitude;
 
@@ -69,16 +69,16 @@ impl Eye {
 }
 
 pub struct Camera {
-    pixel_num_w: u32,
-    pixel_num_h: u32,
+    pub pixel_num_w: u32,
+    pub pixel_num_h: u32,
 
-    eye_pos: Point3,
+    pub eye_pos: Point3,
     sensor_corner: Point3,
     pixel_u: Vec3,
     pixel_v: Vec3,
 
-    spp: u32,
-    sspp: u32,
+    pub spp: u32,
+    pub sspp: u32,
 }
 
 impl Camera {
@@ -96,8 +96,9 @@ impl Camera {
         let eye_dir = eye.get_direction(scene, &eye_pos);
         let sensor_h = sensor_w * pixel_num_h as f64 / pixel_num_w as f64;
 
-        let axis = Vec3(0., to_radian(AXIS + 90.).cos(), to_radian(AXIS + 90.).sin());
-        let sensor_u = cross(eye_dir, axis).normalize() * sensor_w;
+        //let axis = Vec3(0., to_radian(AXIS + 90.).cos(), to_radian(AXIS + 90.).sin());
+        let up = (eye_pos - scene.earth.center).normalize();
+        let sensor_u = cross(eye_dir, up).normalize() * sensor_w;
         let sensor_v = cross(eye_dir, sensor_u).normalize() * sensor_h;
         let pixel_u = sensor_u / pixel_num_w as f64;
         let pixel_v = sensor_v / pixel_num_h as f64;
