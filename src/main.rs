@@ -5,6 +5,7 @@ mod random;
 mod ray;
 mod sampling;
 mod scene;
+mod spectrum;
 mod sphere;
 
 fn main() {

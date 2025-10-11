@@ -26,7 +26,7 @@ pub fn pdf_sample_cos_hemi(normal: &Vec3, dir: &Vec3) -> f64 {
 
 pub fn sample_wavelength(rand: &mut XorRand) -> f64 {
     // sample 380nm - 779nm
-    380. + (rand.nexti() % 400) as f64
+    380. + rand.next01() * 400.
 }
 
 pub fn pdf_sample_wavelength() -> f64 {
