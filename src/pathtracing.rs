@@ -1,5 +1,5 @@
 use crate::{
-    constant::SUN_LIGHT,
+    constant::{EARTH_RAD, PI_INV, SUN_LIGHT},
     math::{Vec3, dot},
     random::XorRand,
     ray::{HitRecord, Ray},
@@ -40,7 +40,7 @@ impl Pathtracing {
 
     fn roullete(&mut self, time: u32, rand: &mut XorRand) -> bool {
         let roullete_prob = if time > MAX_DEPTH {
-            0.5 * (2_i32.pow(time - MAX_DEPTH)) as f64
+            0.5 / (2_i32.pow(time - MAX_DEPTH)) as f64
         } else if time <= DEPTH {
             1.
         } else {
@@ -56,11 +56,16 @@ impl Pathtracing {
     }
 
     fn trace_earth(&mut self, scene: &Scene, rand: &mut XorRand) {
-        // lambertian model, albedo=0.3
+        // lambertian model
         let new_dir = sample_cos_hemisphere(&self.orienting_normal, rand);
         let new_org = self.record.hitpoint + 0.00001 * self.orienting_normal;
         self.now_ray = Ray::new(new_org, new_dir);
-        self.throughput *= 0.3;
+        if self.wavelength < 500. && self.wavelength > 420. {
+            self.throughput *= 0.2;
+        } else {
+            self.throughput *= 0.1;
+        }
+        //self.throughput *= 0.1;
 
         let nee_result = scene.nee(&new_org, self.wavelength, rand);
         if nee_result.pdf != 0. {
@@ -68,7 +73,8 @@ impl Pathtracing {
             let cosine = dot(self.orienting_normal, nee_result.dir);
             let mis_weight = 1. / (pdf_pt + nee_result.pdf);
             //transmittance=1
-            self.value += self.throughput * nee_result.value * cosine * mis_weight / self.total_pdf;
+            self.value +=
+                self.throughput * nee_result.value * PI_INV * cosine * mis_weight / self.total_pdf;
         }
 
         self.pdf_sample_pt = pdf_sample_cos_hemi(&self.orienting_normal, &new_dir);
@@ -139,6 +145,12 @@ impl Pathtracing {
                 }
                 ObjectType::Atmosphere => {
                     in_atmosphere = !in_atmosphere;
+                    self.now_ray.org = self.record.hitpoint + self.now_ray.dir * 0.1;
+                    if in_atmosphere
+                        && (self.now_ray.org - scene.earth.center).length() > EARTH_RAD + 100.
+                    {
+                        break;
+                    }
                 }
             }
         }
@@ -146,8 +158,16 @@ impl Pathtracing {
         self.value
     }
 
-    pub fn test(&mut self, scene: &Scene) -> f64 {
+    pub fn test_sun(&mut self, scene: &Scene) -> f64 {
         if scene.sun.hit(&self.now_ray, &mut self.record) {
+            SUN_LIGHT
+        } else {
+            0.
+        }
+    }
+
+    pub fn test_earth(&mut self, scene: &Scene) -> f64 {
+        if scene.earth.hit(&self.now_ray, &mut self.record) {
             SUN_LIGHT
         } else {
             0.

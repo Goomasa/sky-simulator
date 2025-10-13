@@ -1,5 +1,5 @@
 use crate::{
-    constant::{AXIS, EARTH_RAD, PI},
+    constant::{AXIS, EARTH_RAD, EARTH_TO_SUN, PI, SUN_RAD},
     math::{Point3, Vec3, cross, to_radian},
     scene::Scene,
 };
@@ -38,7 +38,7 @@ impl Eye {
 
     fn get_position(&self, scene: &Scene) -> Point3 {
         let w = Vec3(0., to_radian(AXIS + 90.).cos(), to_radian(AXIS + 90.).sin());
-        let u = (scene.earth.center - scene.sun.center).normalize();
+        let u = (scene.earth.center - scene.sun.center) / (SUN_RAD + EARTH_RAD + EARTH_TO_SUN);
         let v = cross(w, u).normalize();
 
         let phi = PI * (self.time % 24) as f64 / 12.;
@@ -96,7 +96,6 @@ impl Camera {
         let eye_dir = eye.get_direction(scene, &eye_pos);
         let sensor_h = sensor_w * pixel_num_h as f64 / pixel_num_w as f64;
 
-        //let axis = Vec3(0., to_radian(AXIS + 90.).cos(), to_radian(AXIS + 90.).sin());
         let up = (eye_pos - scene.earth.center).normalize();
         let sensor_u = cross(eye_dir, up).normalize() * sensor_w;
         let sensor_v = cross(eye_dir, sensor_u).normalize() * sensor_h;

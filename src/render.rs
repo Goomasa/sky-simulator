@@ -41,7 +41,8 @@ pub fn render(scene: &Scene, camera: &Camera) {
                                 Pathtracing::new(Ray::new(pos_on_sensor, dir), wavelength);
 
                             let value = tracer.integrate(scene, &mut rand);
-                            //let value = tracer.test(scene);
+                            //let value = tracer.test_sun(scene);
+                            //let value = tracer.test_earth(scene);
 
                             if is_valid(value) {
                                 accumlated_value = accumlated_value
@@ -57,7 +58,7 @@ pub fn render(scene: &Scene, camera: &Camera) {
 
     for i in 0..total_px {
         let v = i / camera.pixel_num_w;
-        let u = camera.pixel_num_w - (i - camera.pixel_num_w * v) - 1;
+        let u = i - camera.pixel_num_w * v;
         let xyz = buffer[i as usize];
 
         let rgb = gamma(convert_to_srgb(&xyz));

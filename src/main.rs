@@ -19,7 +19,7 @@ mod sphere;
 fn main() {
     let scene = Scene::new(3);
 
-    let eye = Eye::new(12, 30., 0.1, Direction::South, 30.);
+    let eye = Eye::new(12, 30., 1., Direction::South, 30.);
     let camera = Camera::new(&eye, &scene, 600, 400, 0.02, 0.05, 4, 4);
     render(&scene, &camera);
 }
