@@ -40,6 +40,7 @@ impl Eye {
         let w = Vec3(0., to_radian(AXIS + 90.).cos(), to_radian(AXIS + 90.).sin());
         let u = (scene.earth.center - scene.sun.center) / (SUN_RAD + EARTH_RAD + EARTH_TO_SUN);
         let v = cross(w, u).normalize();
+        let u = cross(v, w).normalize();
 
         let phi = PI * (self.time % 24) as f64 / 12.;
         let theta = to_radian(90. - self.latitude);
