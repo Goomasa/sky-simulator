@@ -25,12 +25,12 @@ pub fn pdf_sample_cos_hemi(normal: &Vec3, dir: &Vec3) -> f64 {
 }
 
 pub fn sample_wavelength(rand: &mut XorRand) -> f64 {
-    // sample 400nm - 780nm
-    400. + rand.next01() * 380.
+    // sample 380nm - 780nm
+    380. + rand.next01() * 400.
 }
 
 pub fn pdf_sample_wavelength() -> f64 {
-    1. / 380.
+    1. / 400.
 }
 
 pub fn sample_phase_rayleigh(prev_dir: &Vec3, rand: &mut XorRand) -> (Vec3, f64) {

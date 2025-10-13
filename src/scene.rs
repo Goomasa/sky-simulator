@@ -50,8 +50,8 @@ impl Scene {
 
     pub fn hit(&self, ray: &Ray, record: &mut HitRecord) -> bool {
         let mut is_hit = self.earth.hit(ray, record);
-        is_hit = is_hit || self.sun.hit(ray, record);
-        is_hit || self.atmosphere.hit(ray, record)
+        is_hit = is_hit | self.sun.hit(ray, record);
+        is_hit | self.atmosphere.hit(ray, record)
     }
 
     pub fn in_atmosphere(&self, point: &Point3) -> bool {
@@ -109,7 +109,7 @@ impl Scene {
         // return (hit_record, point)
         let majorant = self.scattering_coeff_rayleigh(&self.altitude_min_point(ray), wavelength); // absorption-coeff=0
         let mut record = HitRecord::new();
-        let _ = self.earth.hit(ray, &mut record) || self.atmosphere.hit(ray, &mut record);
+        let _ = self.earth.hit(ray, &mut record) | self.atmosphere.hit(ray, &mut record);
 
         let mut to_border = record.distance;
         let mut sampled_len = -rand.next01().ln() / majorant;

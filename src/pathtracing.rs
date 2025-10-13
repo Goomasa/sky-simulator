@@ -1,5 +1,5 @@
 use crate::{
-    constant::{EARTH_RAD, PI_INV, SUN_LIGHT},
+    constant::{EARTH_RAD, KARMAN_LINE, PI_INV, SUN_LIGHT},
     math::{Vec3, dot},
     random::XorRand,
     ray::{HitRecord, Ray},
@@ -113,7 +113,7 @@ impl Pathtracing {
             }
 
             if in_atmosphere {
-                if self.freepath_sample(scene, rand) {
+                if !self.freepath_sample(scene, rand) {
                     continue;
                 }
             } else {
@@ -145,10 +145,15 @@ impl Pathtracing {
                 }
                 ObjectType::Atmosphere => {
                     in_atmosphere = !in_atmosphere;
-                    self.now_ray.org = self.record.hitpoint + self.now_ray.dir * 0.1;
-                    if in_atmosphere
-                        && (self.now_ray.org - scene.earth.center).length() > EARTH_RAD + 100.
-                    {
+                    self.now_ray.org = self.record.hitpoint - self.orienting_normal * 0.01;
+
+                    let h = (self.now_ray.org - scene.earth.center).length() - EARTH_RAD;
+
+                    if in_atmosphere && h > KARMAN_LINE {
+                        println!("{}, {}", h, time);
+                        break;
+                    } else if !in_atmosphere && h < KARMAN_LINE {
+                        println!("{}, {}", h, time);
                         break;
                     }
                 }
