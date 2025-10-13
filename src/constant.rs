@@ -10,7 +10,7 @@ pub const AXIS: f64 = 23.4;
 pub const EARTH_TO_SUN: f64 = 1.5 * 1e8;
 pub const SUN_RAD: f64 = 6.96 * 1e5;
 pub const KARMAN_LINE: f64 = 100.;
-pub const SUN_LIGHT: f64 = 2. * 1e4;
+pub const SUN_LIGHT: f64 = 1.5 * 1e5;
 
 pub const NS: f64 = 2.54743 * 1e19;
 pub const PN: f64 = 0.0279; // depolarization factor

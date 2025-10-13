@@ -3,6 +3,7 @@ use crate::{
     math::{Point3, Vec3, dot, fmax},
     random::XorRand,
     ray::{HitRecord, Ray},
+    sampling::ScatteringType,
     sphere::{ObjectType, Sphere},
 };
 
@@ -83,7 +84,26 @@ impl Scene {
         mu0 * 1e5 * coeff
     }
 
-    pub fn altitude_min_point(&self, ray: &Ray) -> Point3 {
+    pub fn coeff_mie(&self, point: &Point3) -> (f64, f64) {
+        // return (scattering, absorption)
+        let h = fmax((*point - self.earth.center).length() - EARTH_RAD, 0.);
+        (4. * 1e-3 * E.powf(-h / 1.2), 4.4 * 1e-3 * E.powf(-h / 1.2))
+    }
+
+    pub fn get_atmos_coeff(
+        &self,
+        point: &Point3,
+        wavelength: f64,
+        sc_type: &ScatteringType,
+    ) -> (f64, f64) {
+        if let ScatteringType::Rayleigh = sc_type {
+            (self.scattering_coeff_rayleigh(point, wavelength), 0.)
+        } else {
+            self.coeff_mie(point)
+        }
+    }
+
+    fn altitude_min_point(&self, ray: &Ray) -> Point3 {
         let po = ray.org - self.earth.center;
         let dot = dot(po.normalize(), ray.dir);
 
@@ -104,10 +124,15 @@ impl Scene {
         &self,
         ray: &Ray,
         wavelength: f64,
+        sc_type: &ScatteringType,
         rand: &mut XorRand,
     ) -> (Option<HitRecord>, Point3) {
         // return (hit_record, point)
-        let majorant = self.scattering_coeff_rayleigh(&self.altitude_min_point(ray), wavelength); // absorption-coeff=0
+        let majorant = {
+            let coeff = self.get_atmos_coeff(&self.altitude_min_point(ray), wavelength, sc_type);
+            coeff.0 + coeff.1
+        };
+
         let mut record = HitRecord::new();
         let _ = self.earth.hit(ray, &mut record) | self.atmosphere.hit(ray, &mut record);
 
@@ -122,7 +147,11 @@ impl Scene {
                 return (Some(record), point);
             }
 
-            let ratio = self.scattering_coeff_rayleigh(&point, wavelength) / majorant;
+            let ratio = {
+                let coeff = self.get_atmos_coeff(&point, wavelength, sc_type);
+                (coeff.0 + coeff.1) / majorant
+            };
+
             if rand.next01() < ratio {
                 return (None, point);
             }
@@ -133,7 +162,13 @@ impl Scene {
         }
     }
 
-    pub fn nee(&self, org: &Point3, wavelength: f64, rand: &mut XorRand) -> NeeResult {
+    pub fn nee(
+        &self,
+        org: &Point3,
+        wavelength: f64,
+        sc_type: &ScatteringType,
+        rand: &mut XorRand,
+    ) -> NeeResult {
         let (sample_point, pdf) = self.sun.sample(org, rand);
         let dir = (sample_point - *org).normalize();
         let ray = Ray::new(*org, dir);
@@ -144,7 +179,7 @@ impl Scene {
         }
 
         //org is in atmosphere
-        if let (Some(_), _) = self.delta_tracking(&ray, wavelength, rand) {
+        if let (Some(_), _) = self.delta_tracking(&ray, wavelength, &sc_type, rand) {
             // transmittance=1
             return NeeResult::new(pdf, SUN_LIGHT, dir);
         }

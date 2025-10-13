@@ -4,6 +4,12 @@ use crate::{
     random::XorRand,
 };
 
+#[derive(Debug)]
+pub enum ScatteringType {
+    Rayleigh,
+    Mie,
+}
+
 pub fn sample_cos_hemisphere(normal: &Vec3, rand: &mut XorRand) -> Vec3 {
     let w = *normal;
     let u = if w.0.abs() > EPS {
@@ -33,7 +39,7 @@ pub fn pdf_sample_wavelength() -> f64 {
     1. / 400.
 }
 
-pub fn sample_phase_rayleigh(prev_dir: &Vec3, rand: &mut XorRand) -> (Vec3, f64) {
+fn sample_phase_rayleigh(prev_dir: &Vec3, rand: &mut XorRand) -> (Vec3, f64) {
     let w = *prev_dir;
     let u = if w.0.abs() > EPS {
         cross(Vec3(0., 1., 0.), w).normalize()
@@ -57,7 +63,53 @@ pub fn sample_phase_rayleigh(prev_dir: &Vec3, rand: &mut XorRand) -> (Vec3, f64)
     )
 }
 
-pub fn pdf_phase_rayleigh(dir: &Vec3, prev_dir: &Vec3) -> f64 {
+fn pdf_phase_rayleigh(dir: &Vec3, prev_dir: &Vec3) -> f64 {
     let dot = dot(*prev_dir, *dir);
     3. * (1. + dot * dot) / (16. * PI)
+}
+
+fn sample_phase_mie(prev_dir: &Vec3, rand: &mut XorRand) -> (Vec3, f64) {
+    let w = *prev_dir;
+    let u = if w.0.abs() > EPS {
+        cross(Vec3(0., 1., 0.), w).normalize()
+    } else {
+        cross(Vec3(1., 0., 0.), w).normalize()
+    };
+    let v = cross(w, u);
+
+    let phi = 2. * PI * rand.next01();
+
+    let g = 0.8;
+    let cos_theta = {
+        let r = (1. - g * g) / (1. + g - 2. * g * rand.next01());
+        -1. / (2. * g) * (1. + g * g - r * r)
+    };
+    let sin_theta = (1. - cos_theta * cos_theta).sqrt();
+
+    (
+        u * sin_theta * phi.cos() + v * sin_theta * phi.sin() + w * cos_theta,
+        1. / (4. * PI) * (1. - g * g) / (1. + g * g + 2. * g * cos_theta).powf(1.5),
+    )
+}
+
+fn pdf_phase_mie(dir: &Vec3, prev_dir: &Vec3) -> f64 {
+    let dot = dot(*prev_dir, *dir);
+    let g = 0.8;
+    1. / (4. * PI) * (1. - g * g) / (1. + g * g + 2. * g * dot).powf(1.5)
+}
+
+pub fn sample_phase(sc_type: &ScatteringType, prev_dir: &Vec3, rand: &mut XorRand) -> (Vec3, f64) {
+    if let ScatteringType::Rayleigh = sc_type {
+        sample_phase_rayleigh(prev_dir, rand)
+    } else {
+        sample_phase_mie(prev_dir, rand)
+    }
+}
+
+pub fn pdf_phase(sc_type: &ScatteringType, dir: &Vec3, prev_dir: &Vec3) -> f64 {
+    if let ScatteringType::Rayleigh = sc_type {
+        pdf_phase_rayleigh(dir, prev_dir)
+    } else {
+        pdf_phase_mie(dir, prev_dir)
+    }
 }

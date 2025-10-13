@@ -1,10 +1,10 @@
 use crate::{
     constant::{EARTH_RAD, KARMAN_LINE, PI_INV, SUN_LIGHT},
-    math::{Vec3, dot},
+    math::{Vec3, dot, fmax},
     random::XorRand,
     ray::{HitRecord, Ray},
     sampling::{
-        pdf_phase_rayleigh, pdf_sample_cos_hemi, sample_cos_hemisphere, sample_phase_rayleigh,
+        ScatteringType, pdf_phase, pdf_sample_cos_hemi, sample_cos_hemisphere, sample_phase,
     },
     scene::Scene,
     sphere::ObjectType,
@@ -60,17 +60,20 @@ impl Pathtracing {
         let new_dir = sample_cos_hemisphere(&self.orienting_normal, rand);
         let new_org = self.record.hitpoint + 0.00001 * self.orienting_normal;
         self.now_ray = Ray::new(new_org, new_dir);
-        if self.wavelength < 500. && self.wavelength > 420. {
-            self.throughput *= 0.2;
-        } else {
-            self.throughput *= 0.1;
-        }
-        //self.throughput *= 0.1;
+        self.throughput *= 0.1;
 
-        let nee_result = scene.nee(&new_org, self.wavelength, rand);
+        let coeff_rayleigh = scene.scattering_coeff_rayleigh(&new_org, self.wavelength);
+        let coeff_mie = scene.coeff_mie(&new_org).0;
+        let sc_type = if rand.next01() < coeff_rayleigh / (coeff_rayleigh + coeff_mie) {
+            ScatteringType::Rayleigh
+        } else {
+            ScatteringType::Mie
+        };
+
+        let nee_result = scene.nee(&new_org, self.wavelength, &sc_type, rand);
         if nee_result.pdf != 0. {
             let pdf_pt = pdf_sample_cos_hemi(&self.orienting_normal, &nee_result.dir);
-            let cosine = dot(self.orienting_normal, nee_result.dir);
+            let cosine = fmax(dot(self.orienting_normal, nee_result.dir), 0.);
             let mis_weight = 1. / (pdf_pt + nee_result.pdf);
             //transmittance=1
             self.value +=
@@ -81,14 +84,27 @@ impl Pathtracing {
     }
 
     fn freepath_sample(&mut self, scene: &Scene, rand: &mut XorRand) -> bool {
-        let tracking_result = scene.delta_tracking(&self.now_ray, self.wavelength, rand);
-        if let (None, point) = tracking_result {
-            let (new_dir, pdf_phase_pt) = sample_phase_rayleigh(&self.now_ray.dir, rand);
-            self.throughput *= 1.; // now, scattering_coeff=extinction_coeff
+        let coeff_rayleigh = scene.scattering_coeff_rayleigh(&self.now_ray.org, self.wavelength);
+        let coeff_mie = scene.coeff_mie(&self.now_ray.org);
 
-            let nee_result = scene.nee(&point, self.wavelength, rand);
+        let single_albedo;
+        let sc_type;
+        if rand.next01() < coeff_rayleigh / (coeff_rayleigh + coeff_mie.0) {
+            single_albedo = 1.;
+            sc_type = ScatteringType::Rayleigh;
+        } else {
+            single_albedo = coeff_mie.0 / (coeff_mie.0 + coeff_mie.1);
+            sc_type = ScatteringType::Mie;
+        }
+
+        let tracking_result = scene.delta_tracking(&self.now_ray, self.wavelength, &sc_type, rand);
+        if let (None, point) = tracking_result {
+            let (new_dir, pdf_phase_pt) = sample_phase(&sc_type, &self.now_ray.dir, rand);
+            self.throughput *= single_albedo;
+
+            let nee_result = scene.nee(&point, self.wavelength, &sc_type, rand);
             if nee_result.pdf != 0. {
-                let pdf_phase_nee = pdf_phase_rayleigh(&nee_result.dir, &self.now_ray.dir);
+                let pdf_phase_nee = pdf_phase(&sc_type, &nee_result.dir, &self.now_ray.dir);
                 let mis_weight = 1. / (pdf_phase_nee + nee_result.pdf);
                 self.value += self.throughput * nee_result.value * pdf_phase_nee * mis_weight
                     / self.total_pdf;
