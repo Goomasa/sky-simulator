@@ -30,7 +30,7 @@ impl Scene {
         let sun = Sphere::new(Vec3::zero(), SUN_RAD, ObjectType::Sun);
 
         let earth_center = {
-            let earth_phi = (month - 3) as f64 * PI / 6.;
+            let earth_phi = (month + 9) as f64 * PI / 6.;
             let r = EARTH_RAD + SUN_RAD + EARTH_TO_SUN;
             Vec3(r * earth_phi.cos(), r * earth_phi.sin(), 0.)
         };

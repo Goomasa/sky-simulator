@@ -63,12 +63,13 @@ impl Pathtracing {
         self.throughput *= 0.1;
 
         let coeff_rayleigh = scene.scattering_coeff_rayleigh(&new_org, self.wavelength);
-        let coeff_mie = scene.coeff_mie(&new_org).0;
-        let sc_type = if rand.next01() < coeff_rayleigh / (coeff_rayleigh + coeff_mie) {
-            ScatteringType::Rayleigh
-        } else {
-            ScatteringType::Mie
-        };
+        let coeff_mie = scene.coeff_mie(&new_org);
+        let sc_type =
+            if rand.next01() < coeff_rayleigh / (coeff_rayleigh + coeff_mie.0 + coeff_mie.1) {
+                ScatteringType::Rayleigh
+            } else {
+                ScatteringType::Mie
+            };
 
         let nee_result = scene.nee(&new_org, self.wavelength, &sc_type, rand);
         if nee_result.pdf != 0. {
@@ -89,7 +90,7 @@ impl Pathtracing {
 
         let single_albedo;
         let sc_type;
-        if rand.next01() < coeff_rayleigh / (coeff_rayleigh + coeff_mie.0) {
+        if rand.next01() < coeff_rayleigh / (coeff_rayleigh + coeff_mie.0 + coeff_mie.1) {
             single_albedo = 1.;
             sc_type = ScatteringType::Rayleigh;
         } else {
@@ -177,21 +178,5 @@ impl Pathtracing {
         }
 
         self.value
-    }
-
-    pub fn test_sun(&mut self, scene: &Scene) -> f64 {
-        if scene.sun.hit(&self.now_ray, &mut self.record) {
-            SUN_LIGHT
-        } else {
-            0.
-        }
-    }
-
-    pub fn test_earth(&mut self, scene: &Scene) -> f64 {
-        if scene.earth.hit(&self.now_ray, &mut self.record) {
-            SUN_LIGHT
-        } else {
-            0.
-        }
     }
 }

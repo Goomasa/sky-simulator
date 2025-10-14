@@ -12,7 +12,7 @@ pub enum Direction {
 }
 
 pub struct Eye {
-    time: u32,            // 0 - 23 [h]
+    time: f64,            // 0 - 24 [h]
     latitude: f64,        // north latitude: 0 - 90, south latitude: -90 - 0
     altitude: f64,        // [km]
     direction: Direction, // NSWE
@@ -21,7 +21,7 @@ pub struct Eye {
 
 impl Eye {
     pub fn new(
-        time: u32,
+        time: f64,
         latitude: f64,
         altitude: f64,
         direction: Direction,
@@ -42,7 +42,7 @@ impl Eye {
         let v = cross(w, u).normalize();
         let u = cross(v, w).normalize();
 
-        let phi = PI * (self.time % 24) as f64 / 12.;
+        let phi = PI * self.time / 12.;
         let theta = to_radian(90. - self.latitude);
         let r = EARTH_RAD + self.altitude;
 

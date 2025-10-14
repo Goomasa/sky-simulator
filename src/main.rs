@@ -17,9 +17,13 @@ mod spectrum;
 mod sphere;
 
 fn main() {
-    let scene = Scene::new(3);
+    let start = std::time::Instant::now();
 
-    let eye = Eye::new(12, 30., 1., Direction::South, 30.);
+    let scene = Scene::new(3);
+    let eye = Eye::new(12., 30., 1., Direction::South, 30.);
     let camera = Camera::new(&eye, &scene, 600, 400, 0.2, 0.5, 4, 4);
     render(&scene, &camera);
+
+    let end = start.elapsed();
+    println!("{}.{:03}sec", end.as_secs(), end.subsec_nanos() / 1000000);
 }
