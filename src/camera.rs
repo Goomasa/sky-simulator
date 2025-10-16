@@ -36,23 +36,28 @@ impl Eye {
         }
     }
 
-    fn get_position(&self, scene: &Scene) -> Point3 {
+    fn get_position(&self, scene: &mut Scene) -> Point3 {
         let w = Vec3(0., to_radian(AXIS + 90.).cos(), to_radian(AXIS + 90.).sin());
-        let u = (scene.earth.center - scene.sun.center) / (SUN_RAD + EARTH_RAD + EARTH_TO_SUN);
+        let u =
+            (scene.earth.shape.center - scene.sun.center) / (SUN_RAD + EARTH_RAD + EARTH_TO_SUN);
         let v = cross(w, u).normalize();
         let u = cross(v, w).normalize();
+
+        scene.earth.u = u;
+        scene.earth.v = v;
+        scene.earth.w = w;
 
         let phi = PI * self.time / 12.;
         let theta = to_radian(90. - self.latitude);
         let r = EARTH_RAD + self.altitude;
 
         r * (u * theta.sin() * phi.cos() + v * theta.sin() * phi.sin() + w * theta.cos())
-            + scene.earth.center
+            + scene.earth.shape.center
     }
 
     fn get_direction(&self, scene: &Scene, pos: &Point3) -> Vec3 {
         // can not calculate if eys is on the N/S Pole
-        let w = (*pos - scene.earth.center).normalize();
+        let w = (*pos - scene.earth.shape.center).normalize();
         let axis = Vec3(0., to_radian(AXIS + 90.).cos(), to_radian(AXIS + 90.).sin());
         let u = cross(axis, w).normalize(); // east
         let v = cross(w, u); // north
@@ -85,7 +90,7 @@ pub struct Camera {
 impl Camera {
     pub fn new(
         eye: &Eye,
-        scene: &Scene,
+        scene: &mut Scene,
         pixel_num_w: u32,
         pixel_num_h: u32,
         eye_to_sensor: f64,
@@ -97,7 +102,7 @@ impl Camera {
         let eye_dir = eye.get_direction(scene, &eye_pos);
         let sensor_h = sensor_w * pixel_num_h as f64 / pixel_num_w as f64;
 
-        let up = (eye_pos - scene.earth.center).normalize();
+        let up = (eye_pos - scene.earth.shape.center).normalize();
         let sensor_u = cross(eye_dir, up).normalize() * sensor_w;
         let sensor_v = cross(eye_dir, sensor_u).normalize() * sensor_h;
         let pixel_u = sensor_u / pixel_num_w as f64;

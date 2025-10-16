@@ -2,6 +2,7 @@ use crate::{
     camera::{Camera, Direction, Eye},
     render::render,
     scene::Scene,
+    texture::Texture,
 };
 
 mod camera;
@@ -15,13 +16,15 @@ mod sampling;
 mod scene;
 mod spectrum;
 mod sphere;
+mod texture;
 
 fn main() {
     let start = std::time::Instant::now();
 
-    let scene = Scene::new(3);
-    let eye = Eye::new(12., 30., 1., Direction::South, 30.);
-    let camera = Camera::new(&eye, &scene, 600, 400, 0.2, 0.5, 4, 4);
+    let texture = Texture::set_earth();
+    let mut scene = Scene::new(3, &texture);
+    let eye = Eye::new(12., 60., 1., Direction::South, 30.);
+    let camera = Camera::new(&eye, &mut scene, 600, 400, 0.2, 0.5, 4, 4);
     render(&scene, &camera);
 
     let end = start.elapsed();

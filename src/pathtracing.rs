@@ -60,7 +60,9 @@ impl Pathtracing {
         let new_dir = sample_cos_hemisphere(&self.orienting_normal, rand);
         let new_org = self.record.hitpoint + 0.00001 * self.orienting_normal;
         self.now_ray = Ray::new(new_org, new_dir);
-        self.throughput *= 0.1;
+        self.throughput *= scene
+            .earth
+            .get_reflectance(&self.record.hitpoint, self.wavelength);
 
         let coeff_rayleigh = scene.scattering_coeff_rayleigh(&new_org, self.wavelength);
         let coeff_mie = scene.coeff_mie(&new_org);
@@ -164,7 +166,7 @@ impl Pathtracing {
                     in_atmosphere = !in_atmosphere;
                     self.now_ray.org = self.record.hitpoint - self.orienting_normal * 0.01;
 
-                    let h = (self.now_ray.org - scene.earth.center).length() - EARTH_RAD;
+                    let h = (self.now_ray.org - scene.earth.shape.center).length() - EARTH_RAD;
 
                     if in_atmosphere && h > KARMAN_LINE {
                         println!("{}, {}", h, time);

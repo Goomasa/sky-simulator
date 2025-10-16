@@ -1,4 +1,7 @@
-use crate::{constant::E, math::Vec3};
+use crate::{
+    constant::E,
+    math::{Vec3, fmin},
+};
 
 pub type XYZ = Vec3;
 pub type RGB = Vec3;
@@ -38,4 +41,19 @@ pub fn gamma(v: RGB) -> (u32, u32, u32) {
     let g = (v.1.clamp(0., 1.).powf(1. / 2.2) * 255.) as u32;
     let b = (v.2.clamp(0., 1.).powf(1. / 2.2) * 255.) as u32;
     (r, g, b)
+}
+
+pub fn rgb_to_reflectance(rgb: &RGB, wavelength: f64) -> f64 {
+    let diff_r = (wavelength - 700.).abs();
+    let diff_g = (wavelength - 530.).abs();
+    let diff_b = (wavelength - 460.).abs();
+
+    let min = fmin(diff_r, fmin(diff_g, diff_b));
+    if min == diff_r {
+        rgb.0
+    } else if min == diff_g {
+        rgb.1
+    } else {
+        rgb.2
+    }
 }

@@ -4,7 +4,8 @@ use crate::{
     random::XorRand,
     ray::{HitRecord, Ray},
     sampling::ScatteringType,
-    sphere::{ObjectType, Sphere},
+    sphere::{Earth, ObjectType, Sphere},
+    texture::Texture,
 };
 
 pub struct NeeResult {
@@ -19,14 +20,14 @@ impl NeeResult {
     }
 }
 
-pub struct Scene {
+pub struct Scene<'a> {
     pub sun: Sphere,
-    pub earth: Sphere,
+    pub earth: Earth<'a>,
     pub atmosphere: Sphere,
 }
 
-impl Scene {
-    pub fn new(month: u32) -> Self {
+impl<'a> Scene<'a> {
+    pub fn new(month: u32, earth_texture: &'a Texture) -> Self {
         let sun = Sphere::new(Vec3::zero(), SUN_RAD, ObjectType::Sun);
 
         let earth_center = {
@@ -34,7 +35,10 @@ impl Scene {
             let r = EARTH_RAD + SUN_RAD + EARTH_TO_SUN;
             Vec3(r * earth_phi.cos(), r * earth_phi.sin(), 0.)
         };
-        let earth = Sphere::new(earth_center, EARTH_RAD, ObjectType::Earth);
+        let earth = {
+            let shape = Sphere::new(earth_center, EARTH_RAD, ObjectType::Earth);
+            Earth::new(shape, earth_texture)
+        };
 
         let atmosphere = Sphere::new(
             earth_center,
@@ -50,19 +54,19 @@ impl Scene {
     }
 
     pub fn hit(&self, ray: &Ray, record: &mut HitRecord) -> bool {
-        let mut is_hit = self.earth.hit(ray, record);
+        let mut is_hit = self.earth.shape.hit(ray, record);
         is_hit = is_hit | self.sun.hit(ray, record);
         is_hit | self.atmosphere.hit(ray, record)
     }
 
     pub fn in_atmosphere(&self, point: &Point3) -> bool {
-        let d = (*point - self.earth.center).length() - EARTH_RAD;
+        let d = (*point - self.earth.shape.center).length() - EARTH_RAD;
         d > 0. && d < KARMAN_LINE
     }
 
     // wavelength: [nm]
     pub fn scattering_coeff_rayleigh(&self, point: &Point3, wavelength: f64) -> f64 {
-        let h = fmax((*point - self.earth.center).length() - EARTH_RAD, 0.);
+        let h = fmax((*point - self.earth.shape.center).length() - EARTH_RAD, 0.);
         let ior = get_ior(wavelength);
 
         let mu0 = {
@@ -86,7 +90,7 @@ impl Scene {
 
     pub fn coeff_mie(&self, point: &Point3) -> (f64, f64) {
         // return (scattering, absorption)
-        let h = fmax((*point - self.earth.center).length() - EARTH_RAD, 0.);
+        let h = fmax((*point - self.earth.shape.center).length() - EARTH_RAD, 0.);
         (4. * 1e-3 * E.powf(-h / 1.2), 4.4 * 1e-3 * E.powf(-h / 1.2))
     }
 
@@ -104,14 +108,14 @@ impl Scene {
     }
 
     fn altitude_min_point(&self, ray: &Ray) -> Point3 {
-        let po = ray.org - self.earth.center;
+        let po = ray.org - self.earth.shape.center;
         let dot = dot(po.normalize(), ray.dir);
 
         if dot > 0. {
             ray.org
         } else {
             let mut record = HitRecord::new();
-            if self.earth.hit(ray, &mut record) {
+            if self.earth.shape.hit(ray, &mut record) {
                 return record.hitpoint;
             }
 
@@ -134,7 +138,7 @@ impl Scene {
         };
 
         let mut record = HitRecord::new();
-        let _ = self.earth.hit(ray, &mut record) | self.atmosphere.hit(ray, &mut record);
+        let _ = self.earth.shape.hit(ray, &mut record) | self.atmosphere.hit(ray, &mut record);
 
         let mut to_border = record.distance;
         let mut sampled_len = -rand.next01().ln() / majorant;
@@ -174,7 +178,7 @@ impl Scene {
         let ray = Ray::new(*org, dir);
         let mut record = HitRecord::new();
         record.distance = (sample_point - *org).length();
-        if self.earth.hit(&ray, &mut record) {
+        if self.earth.shape.hit(&ray, &mut record) {
             return NeeResult::new(0., 0., dir);
         }
 

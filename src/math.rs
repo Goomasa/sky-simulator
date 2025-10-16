@@ -87,6 +87,10 @@ pub fn fmax(a: f64, b: f64) -> f64 {
     if a > b { a } else { b }
 }
 
+pub fn fmin(a: f64, b: f64) -> f64 {
+    if a < b { a } else { b }
+}
+
 pub fn is_valid(v: f64) -> bool {
     if v.is_nan() {
         return false;
