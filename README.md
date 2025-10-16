@@ -11,8 +11,48 @@ This is a path tracer for simulating the sky and Earth.
 
 ## Dependencies
 
+- bmp: https://github.com/sondrele/rust-bmp
+- rayon: https://github.com/rayon-rs/rayon
+- jpeg-decoder: https://github.com/image-rs/jpeg-decoder
+
 ## Usage
+
+```sh
+git clone git@github.com:Goomasa/sky-simulator.git
+cd sky-simulator
+
+cargo run --release
+```
+
+If you would like to use a texture of Earth, make a directory "assets" and download "2k_earth_daymap.jpg" from https://www.solarsystemscope.com/textures/
 
 ## Gallery
 
+<img src="images/bluesky.jpg" width=60% height=60%/>
+
+<img src="images/sunset.jpg" width=60% height=60%>
+
+<img src="images/earth.jpg" width=60% height=60%/>
+
+Texture of Earth (2k_earth_daymap.jpg):
+
+> © Solar System Scope. licensed under CC BY 4.0
+
+> [https://www.solarsystemscope.com/textures/](https://www.solarsystemscope.com/textures/)
+
+
 ## References
+
+- Fernando García Liñán, Adolfo Muñoz Orbañanos. Physically-Based Sky and Atmosphere Rendering
+in Real-Time. Master in Robotics, Zaragoza University
+(January 27, 2023)
+
+- Anthony Bucholtz. Rayleigh-scattering calculations for the terrestrial
+atmosphere. In: Applied Optics 34.15 (May 20, 1995), pp. 2765–2773.
+
+- Matt Pharr, Wenzel Jakob, and Greg Humphreys. Physically Based Rendering: From Theory To Implementation. 
+https://pbr-book.org/4ed/contents
+
+- https://qiita.com/Penguin_Ice/items/37845fe3e2622ca4d2fb
+
+- https://rayspace.xyz/CG/
