@@ -1,5 +1,5 @@
 use crate::{
-    constant::{AXIS, EARTH_RAD, EARTH_TO_SUN, PI, SUN_RAD},
+    constant::{AXIS, EARTH_RAD, EARTH_TO_SUN, EPS, PI, SUN_RAD},
     math::{Point3, Vec3, cross, to_radian},
     scene::Scene,
 };
@@ -43,13 +43,14 @@ impl Eye {
         let v = cross(w, u).normalize();
         let u = cross(v, w).normalize();
 
-        scene.earth.u = u;
-        scene.earth.v = v;
-        scene.earth.w = w;
-
         let phi = PI * self.time / 12.;
         let theta = to_radian(90. - self.latitude);
         let r = EARTH_RAD + self.altitude;
+
+        let jp_phi = phi + PI / 4.;
+        scene.earth.u = u * jp_phi.cos() + v * jp_phi.sin();
+        scene.earth.v = u * (jp_phi + PI / 2.).cos() + v * (jp_phi + PI / 2.).sin();
+        scene.earth.w = w;
 
         r * (u * theta.sin() * phi.cos() + v * theta.sin() * phi.sin() + w * theta.cos())
             + scene.earth.shape.center
@@ -102,8 +103,15 @@ impl Camera {
         let eye_dir = eye.get_direction(scene, &eye_pos);
         let sensor_h = sensor_w * pixel_num_h as f64 / pixel_num_w as f64;
 
-        let up = (eye_pos - scene.earth.shape.center).normalize();
-        let sensor_u = cross(eye_dir, up).normalize() * sensor_w;
+        let sensor_u = if 90. - eye.elevation.abs() < EPS {
+            let axis = Vec3(0., to_radian(AXIS + 90.).cos(), to_radian(AXIS + 90.).sin());
+            cross(eye_dir, axis).normalize() * sensor_w
+        } else {
+            let up = (eye_pos - scene.earth.shape.center).normalize();
+
+            cross(eye_dir, up).normalize() * sensor_w
+        };
+
         let sensor_v = cross(eye_dir, sensor_u).normalize() * sensor_h;
         let pixel_u = sensor_u / pixel_num_w as f64;
         let pixel_v = sensor_v / pixel_num_h as f64;

@@ -33,7 +33,7 @@ impl Texture {
             let r = pixels[3 * i] as f64 / 255.;
             let g = pixels[3 * i + 1] as f64 / 255.;
             let b = pixels[3 * i + 2] as f64 / 255.;
-            data[i] = Vec3(r, g, b);
+            data[i] = Vec3(r.powf(2.2), g.powf(2.2), b.powf(2.2));
         }
 
         Texture {
