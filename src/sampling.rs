@@ -1,7 +1,8 @@
 use crate::{
-    constant::{EPS, PI, PI_INV},
+    constant::{EPS, INT_XYZ, PI, PI_INV},
     math::{Vec3, cross, dot, fmax},
     random::XorRand,
+    spectrum::color_matching,
 };
 
 #[derive(Debug)]
@@ -30,6 +31,7 @@ pub fn pdf_sample_cos_hemi(normal: &Vec3, dir: &Vec3) -> f64 {
     fmax(dot(*normal, *dir) * PI_INV, 0.)
 }
 
+/*
 pub fn sample_wavelength(rand: &mut XorRand) -> f64 {
     // sample 380nm - 780nm
     380. + rand.next01() * 400.
@@ -38,6 +40,30 @@ pub fn sample_wavelength(rand: &mut XorRand) -> f64 {
 pub fn pdf_sample_wavelength() -> f64 {
     1. / 400.
 }
+*/
+
+// ----- //
+// Copyright (c) 2021 Penguin77jp
+// Released under the MIT license
+// https://github.com/Penguin77jp/RaytracingMin/tree/feature/spectrum
+pub fn sample_wavelength(rand: &mut XorRand) -> f64 {
+    let max = 2.1655154441358;
+    loop {
+        let u = 400. * rand.next01() + 380.;
+        let v = rand.next01() * max;
+        let xyz = color_matching(u);
+        if v < (xyz.0 + xyz.1 + xyz.2) {
+            return u;
+        }
+    }
+}
+
+pub fn pdf_sample_wavelength(wavelength: f64) -> f64 {
+    let xyz = color_matching(wavelength);
+    (xyz.0 + xyz.1 + xyz.2) / INT_XYZ
+}
+
+// ----- //
 
 fn sample_phase_rayleigh(prev_dir: &Vec3, rand: &mut XorRand) -> (Vec3, f64) {
     let w = *prev_dir;

@@ -14,3 +14,7 @@ pub const SUN_LIGHT: f64 = 1.5 * 1e5;
 
 pub const NS: f64 = 2.54743 * 1e19;
 pub const PN: f64 = 0.0279; // depolarization factor
+
+pub const INT_XYZ: f64 = 106.76504616237932261548607350578
+    + 106.91973463815504343620398716858
+    + 106.82532490175775630470443615231;

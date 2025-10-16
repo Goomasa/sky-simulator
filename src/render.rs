@@ -41,12 +41,9 @@ pub fn render(scene: &Scene, camera: &Camera) {
                                 Pathtracing::new(Ray::new(pos_on_sensor, dir), wavelength);
 
                             let value = tracer.integrate(scene, &mut rand);
-                            //let value = tracer.test_sun(scene);
-                            //let value = tracer.test_earth(scene);
-
                             if is_valid(value) {
                                 accumlated_value = accumlated_value
-                                    + value * col_matching / pdf_sample_wavelength();
+                                    + value * col_matching / pdf_sample_wavelength(wavelength);
                             }
                         }
                     }
