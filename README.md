@@ -7,13 +7,15 @@ This is a path tracer for simulating the sky and Earth.
 - Unidirectional pathtracing
 - Spectral rendering
 - Heterogeneous medium (atmosphere)
+- Next event estimation
 - Rayleigh and Mie scattering
 
 ## Dependencies
 
 - bmp: https://github.com/sondrele/rust-bmp
 - rayon: https://github.com/rayon-rs/rayon
-- jpeg-decoder: https://github.com/image-rs/jpeg-decoder
+- zune-jpeg: https://github.com/etemesi254/zune-image/tree/dev/crates/zune-jpeg
+- tiff: https://github.com/image-rs/image-tiff
 
 ## Usage
 
@@ -24,7 +26,7 @@ cd sky-simulator
 cargo run --release
 ```
 
-If you would like to use a texture of Earth, make a directory "assets" and download "2k_earth_daymap.jpg" from https://www.solarsystemscope.com/textures/
+If you would like to use a texture of Earth, make a directory "assets" and download "2k_earth_daymap.jpg", "2k_earth_specular_map.tif" and "2k_earth_normal_map.tif" from https://www.solarsystemscope.com/textures/
 
 ## Gallery
 
@@ -34,7 +36,7 @@ If you would like to use a texture of Earth, make a directory "assets" and downl
 
 <img src="images/earth.jpg" width=60% height=60%/>
 
-Texture of Earth (2k_earth_daymap.jpg):
+Texture of Earth (2k_earth_daymap.jpg, 2k_earth_specular_map.tif, 2k_earth_normal_map.tif):
 
 > © Solar System Scope. licensed under CC BY 4.0
 

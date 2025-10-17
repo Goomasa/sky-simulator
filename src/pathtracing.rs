@@ -4,7 +4,8 @@ use crate::{
     random::XorRand,
     ray::{HitRecord, Ray},
     sampling::{
-        ScatteringType, pdf_phase, pdf_sample_cos_hemi, sample_cos_hemisphere, sample_phase,
+        ScatteringType, pdf_phase, pdf_sample_cos_hemi, reflection_dir, sample_cos_hemisphere,
+        sample_phase,
     },
     scene::Scene,
     sphere::ObjectType,
@@ -17,7 +18,8 @@ pub struct Pathtracing {
     wavelength: f64,
     now_ray: Ray,
     record: HitRecord,
-    orienting_normal: Vec3,
+    obj_normal: Vec3,
+    texture_normal: Vec3,
     throughput: f64,
     total_pdf: f64,
     pdf_sample_pt: f64,
@@ -30,7 +32,8 @@ impl Pathtracing {
             wavelength,
             now_ray: ray,
             record: HitRecord::new(),
-            orienting_normal: Vec3::zero(),
+            obj_normal: Vec3::zero(),
+            texture_normal: Vec3::zero(),
             throughput: 1.,
             total_pdf: 1.,
             pdf_sample_pt: -1.,
@@ -57,8 +60,8 @@ impl Pathtracing {
 
     fn trace_earth(&mut self, scene: &Scene, rand: &mut XorRand) {
         // lambertian model
-        let new_dir = sample_cos_hemisphere(&self.orienting_normal, rand);
-        let new_org = self.record.hitpoint + 0.00001 * self.orienting_normal;
+        let new_dir = sample_cos_hemisphere(&self.texture_normal, rand);
+        let new_org = self.record.hitpoint + 0.00001 * self.obj_normal;
         self.now_ray = Ray::new(new_org, new_dir);
         self.throughput *= scene
             .earth
@@ -75,15 +78,26 @@ impl Pathtracing {
 
         let nee_result = scene.nee(&new_org, self.wavelength, &sc_type, rand);
         if nee_result.pdf != 0. {
-            let pdf_pt = pdf_sample_cos_hemi(&self.orienting_normal, &nee_result.dir);
-            let cosine = fmax(dot(self.orienting_normal, nee_result.dir), 0.);
+            let pdf_pt = pdf_sample_cos_hemi(&self.texture_normal, &nee_result.dir);
+            let cosine = fmax(dot(self.texture_normal, nee_result.dir), 0.);
             let mis_weight = 1. / (pdf_pt + nee_result.pdf);
             //transmittance=1
             self.value +=
                 self.throughput * nee_result.value * PI_INV * cosine * mis_weight / self.total_pdf;
         }
 
-        self.pdf_sample_pt = pdf_sample_cos_hemi(&self.orienting_normal, &new_dir);
+        self.pdf_sample_pt = pdf_sample_cos_hemi(&self.texture_normal, &new_dir);
+    }
+
+    fn trace_earth_specular(&mut self, scene: &Scene) {
+        self.throughput *= scene
+            .earth
+            .get_reflectance(&self.record.hitpoint, self.wavelength);
+
+        let new_dir = reflection_dir(&self.now_ray.dir, &self.texture_normal);
+        let new_org = self.record.hitpoint + self.obj_normal * 0.00001;
+        self.now_ray = Ray::new(new_org, new_dir);
+        self.pdf_sample_pt = 1.;
     }
 
     fn freepath_sample(&mut self, scene: &Scene, rand: &mut XorRand) -> bool {
@@ -142,7 +156,7 @@ impl Pathtracing {
                 }
             }
 
-            self.orienting_normal = if dot(self.now_ray.dir, self.record.normal) < 0. {
+            self.obj_normal = if dot(self.now_ray.dir, self.record.normal) < 0. {
                 self.record.normal
             } else {
                 -self.record.normal
@@ -160,11 +174,24 @@ impl Pathtracing {
                     break;
                 }
                 ObjectType::Earth => {
-                    self.trace_earth(scene, rand);
+                    let (u, v) = scene.earth.get_uv(&self.record.hitpoint);
+                    let (specular, normal) = scene.earth.get_property(&self.record.hitpoint, u, v);
+
+                    self.texture_normal = if dot(self.now_ray.dir, normal) < 0. {
+                        normal
+                    } else {
+                        -normal
+                    };
+
+                    if specular < 120 {
+                        self.trace_earth(scene, rand);
+                    } else {
+                        self.trace_earth_specular(scene);
+                    }
                 }
                 ObjectType::Atmosphere => {
                     in_atmosphere = !in_atmosphere;
-                    self.now_ray.org = self.record.hitpoint - self.orienting_normal * 0.01;
+                    self.now_ray.org = self.record.hitpoint - self.obj_normal * 0.01;
 
                     let h = (self.now_ray.org - scene.earth.shape.center).length() - EARTH_RAD;
 

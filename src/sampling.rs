@@ -31,6 +31,10 @@ pub fn pdf_sample_cos_hemi(normal: &Vec3, dir: &Vec3) -> f64 {
     fmax(dot(*normal, *dir) * PI_INV, 0.)
 }
 
+pub fn reflection_dir(in_dir: &Vec3, normal: &Vec3) -> Vec3 {
+    *in_dir + *normal * dot(*in_dir, *normal) * (-2.)
+}
+
 /*
 pub fn sample_wavelength(rand: &mut XorRand) -> f64 {
     // sample 380nm - 780nm

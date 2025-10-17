@@ -123,7 +123,6 @@ impl<'a> Scene<'a> {
         }
     }
 
-    // delta-tracking for rayleigh-scattering
     pub fn delta_tracking(
         &self,
         ray: &Ray,

@@ -101,7 +101,7 @@ impl<'a> Earth<'a> {
         }
     }
 
-    pub fn get_reflectance(&self, point: &Point3, wavelength: f64) -> f64 {
+    pub fn get_uv(&self, point: &Point3) -> (f64, f64) {
         let op = (*point - self.shape.center).normalize();
         let theta = dot(self.w, op).acos(); // 0 - PI
         let u_op = dot(self.u, op);
@@ -125,8 +125,24 @@ impl<'a> Earth<'a> {
             }
         }
 
-        let rgb = self.texture.get_rgb(phi / (2. * PI), theta / PI);
+        (phi / (2. * PI), theta / PI)
+    }
+
+    pub fn get_reflectance(&self, point: &Point3, wavelength: f64) -> f64 {
+        let (u, v) = self.get_uv(point);
+        let rgb = self.texture.get_rgb(u, v);
 
         rgb_to_reflectance(&rgb, wavelength)
+    }
+
+    pub fn get_property(&self, point: &Point3, u: f64, v: f64) -> (u8, Vec3) {
+        let (reflectance, normal) = self.texture.get_property(u, v);
+
+        let z = (*point - self.shape.center).normalize();
+        let x = cross(self.w, z).normalize();
+        let y = cross(x, z);
+
+        let normal = (x * normal.0 + y * normal.1 + z * normal.2).normalize();
+        (reflectance, normal)
     }
 }
