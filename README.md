@@ -26,7 +26,7 @@ cd sky-simulator
 cargo run --release
 ```
 
-If you would like to use a texture of Earth, make a directory "assets" and download "2k_earth_daymap.jpg", "2k_earth_specular_map.tif" and "2k_earth_normal_map.tif" from https://www.solarsystemscope.com/textures/
+If you would like to use textures of Earth, make a directory "assets" and download "2k_earth_daymap.jpg", "2k_earth_specular_map.tif" and "2k_earth_normal_map.tif" from https://www.solarsystemscope.com/textures/
 
 ## Gallery
 
@@ -36,7 +36,7 @@ If you would like to use a texture of Earth, make a directory "assets" and downl
 
 <img src="images/earth.jpg" width=60% height=60%/>
 
-Texture of Earth (2k_earth_daymap.jpg, 2k_earth_specular_map.tif, 2k_earth_normal_map.tif):
+Textures of Earth (2k_earth_daymap.jpg, 2k_earth_specular_map.tif, 2k_earth_normal_map.tif):
 
 > © Solar System Scope. licensed under CC BY 4.0
 
@@ -54,6 +54,9 @@ atmosphere. In: Applied Optics 34.15 (May 20, 1995), pp. 2765–2773.
 
 - Matt Pharr, Wenzel Jakob, and Greg Humphreys. Physically Based Rendering: From Theory To Implementation. 
 https://pbr-book.org/4ed/contents
+
+- Sébastien Hillaire. A Scalable and Production Ready Sky and Atmosphere Rendering Technique. 
+Eurographics Symposium on Rendering 2020
 
 - https://qiita.com/Penguin_Ice/items/37845fe3e2622ca4d2fb
 

@@ -4,6 +4,7 @@ use crate::{
     scene::Scene,
 };
 
+#[allow(unused)]
 pub enum Direction {
     North,
     South,

@@ -18,6 +18,7 @@ mod spectrum;
 mod sphere;
 mod texture;
 
+#[allow(unused)]
 fn render_bluesky() {
     let texture = Texture::new();
     let mut scene = Scene::new(3, &texture);
@@ -26,6 +27,7 @@ fn render_bluesky() {
     render(&scene, &camera);
 }
 
+#[allow(unused)]
 fn render_sunset() {
     let texture = Texture::new();
     let mut scene = Scene::new(3, &texture);
@@ -34,6 +36,7 @@ fn render_sunset() {
     render(&scene, &camera);
 }
 
+#[allow(unused)]
 fn render_earth() {
     let texture = Texture::new();
     let mut scene = Scene::new(3, &texture);

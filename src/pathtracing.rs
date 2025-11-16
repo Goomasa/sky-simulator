@@ -116,12 +116,12 @@ impl Pathtracing {
 
         let tracking_result = scene.delta_tracking(&self.now_ray, self.wavelength, &sc_type, rand);
         if let (None, point) = tracking_result {
-            let (new_dir, pdf_phase_pt) = sample_phase(&sc_type, &self.now_ray.dir, rand);
+            let (new_dir, pdf_phase_pt) = sample_phase(&sc_type, &-self.now_ray.dir, rand);
             self.throughput *= single_albedo;
 
             let nee_result = scene.nee(&point, self.wavelength, &sc_type, rand);
             if nee_result.pdf != 0. {
-                let pdf_phase_nee = pdf_phase(&sc_type, &nee_result.dir, &self.now_ray.dir);
+                let pdf_phase_nee = pdf_phase(&sc_type, &nee_result.dir, &-self.now_ray.dir);
                 let mis_weight = 1. / (pdf_phase_nee + nee_result.pdf);
                 self.value += self.throughput * nee_result.value * pdf_phase_nee * mis_weight
                     / self.total_pdf;

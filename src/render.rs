@@ -61,5 +61,5 @@ pub fn render(scene: &Scene, camera: &Camera) {
         let rgb = gamma(convert_to_srgb(&xyz));
         img.set_pixel(u, v as u32, px!(rgb.0, rgb.1, rgb.2));
     }
-    let _ = img.save("render.bmp");
+    let _ = img.save("reference.bmp");
 }
